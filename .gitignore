@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# env & secrets
+.env
+.env.local
+.env.*.local
+
+# Generated demo-pool config — contains a throwaway testnet treasury SECRET KEY.
+# Recreated locally by `node frontend/wallet/scripts/provision-pool.mjs`. Never commit.
+frontend/wallet/scripts/pool.json
+
+# logs
+*.log
+npm-debug.log*
+
+# ts/state
+tsconfig.tsbuildinfo
+.next_build
+
+# local db / storage
+*.sqlite
+*.sqlite3
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# local cache
+.cache/
+coverage/
+
+# Vendored reference clone (study only — NOT part of the shipped Obsyd codebase)
+.reference/
