@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { StrKey } from "@stellar/stellar-sdk";
 import { config } from "@/lib/config";
+import { readBody, refuse } from "@/lib/custody";
 import { loadPool, fundWithTokens } from "@/lib/swap";
 
 export const runtime = "nodejs";
@@ -15,13 +16,14 @@ export async function POST(req: Request) {
   if (config.network !== "testnet") {
     return NextResponse.json({ ok: false, error: "faucet only on testnet" }, { status: 400 });
   }
+  const body = await readBody(req);
+  const refused = refuse(body);
+  if (refused) return refused;
   if (!loadPool()) {
     return NextResponse.json({ ok: false, error: "pool not provisioned" }, { status: 503 });
   }
-  let address = "";
-  try {
-    address = String((await req.json())?.address || "").trim();
-  } catch {
+  let address = String(body?.address || "").trim();
+  if (!address) {
     address = new URL(req.url).searchParams.get("address")?.trim() || "";
   }
   if (!address || !StrKey.isValidEd25519PublicKey(address)) {

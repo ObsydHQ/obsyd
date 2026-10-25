@@ -6,9 +6,9 @@ export default function Settings() {
   return (
     <WalletFrame title="Settings">
       <div className="o-stack" style={{ gap: 12 }}>
-        <Row href="/settings/passkeys" Icon={IconKey} title="Passkeys &amp; signers" sub="Register, rename, remove" />
-        <Row href="/recover" Icon={IconShield} title="Recovery" sub="Guardians &amp; restore" />
-        <Row href="/settings/security" Icon={IconSettings} title="Security" sub="Session lock, limits" />
+        <Row href="/settings/passkeys" Icon={IconKey} title="Passkeys and signers" sub="Register, rename, remove" />
+        <Row href="/recover" Icon={IconShield} title="Recovery" sub="Guardians and restore" />
+        <Row href="/settings/security" Icon={IconSettings} title="Security" sub="What is enforced, what is not" />
         <Row href="/settings/network" Icon={IconHome} title="Network" sub="Testnet (current)" />
       </div>
 
@@ -30,8 +30,8 @@ function Row({ href, Icon, title, sub }: { href: string; Icon: any; title: strin
           <Icon width={18} height={18} />
         </span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700 }} dangerouslySetInnerHTML={{ __html: title }} />
-          <div className="o-muted" style={{ fontSize: "0.8rem" }} dangerouslySetInnerHTML={{ __html: sub }} />
+          <div style={{ fontWeight: 700 }}>{title}</div>
+          <div className="o-muted" style={{ fontSize: "0.8rem" }}>{sub}</div>
         </div>
         <span className="o-muted">›</span>
       </div>

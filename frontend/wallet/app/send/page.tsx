@@ -2,20 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Transaction } from "@stellar/stellar-sdk";
 import { WalletFrame } from "@/components/WalletFrame";
 import { IconSend, IconKey } from "@/components/Icons";
+import { localSigner, savedAddress } from "@/lib/wallet";
+import { NETWORK_PASSPHRASE } from "@/lib/soroban";
 
 export default function Send() {
   const [address, setAddress] = useState("");
-  const [secret, setSecret] = useState("");
+  const [hasKey, setHasKey] = useState(false);
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [state, setState] = useState<"idle" | "waiting" | "sending" | "done" | "error">("idle");
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    setAddress(localStorage.getItem("obsyd.address") || "");
-    setSecret(localStorage.getItem("obsyd.secret") || "");
+    setAddress(savedAddress());
+    setHasKey(!!localSigner());
   }, []);
 
   const challenge = () => crypto.getRandomValues(new Uint8Array(32));
@@ -36,7 +39,8 @@ export default function Send() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMsg("");
-    if (!secret) {
+    const signer = localSigner();
+    if (!signer) {
       setState("error");
       setMsg("No funded testnet wallet loaded. Go to Home → “Load demo wallet” first.");
       return;
@@ -51,19 +55,30 @@ export default function Send() {
     }
     setState("sending");
     try {
+      // 1. Ask the server for an unsigned payment.
       const r = await fetch("/api/send", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ from: address, to, amount, secret }),
+        body: JSON.stringify({ from: address, to, amount }),
       });
-      const j = await r.json();
-      if (j.ok) {
-        setState("done");
-        setMsg(j.hash);
-      } else {
-        setState("error");
-        setMsg(j.error || "send failed");
-      }
+      const built = await r.json();
+      if (!built.ok) throw new Error(built.error || "could not build the transaction");
+
+      // 2. Sign it here. The key never leaves this device.
+      const tx = new Transaction(built.xdr, NETWORK_PASSPHRASE);
+      tx.sign(signer);
+
+      // 3. Hand the signed envelope to the relay.
+      const s = await fetch("/api/tx/submit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ xdr: tx.toXDR() }),
+      });
+      const j = await s.json();
+      if (!j.ok) throw new Error(describeSubmitFailure(j));
+
+      setState("done");
+      setMsg(j.hash);
     } catch (err: any) {
       setState("error");
       setMsg(String(err?.message || err));
@@ -100,9 +115,14 @@ export default function Send() {
           {state === "waiting" ? "Confirm passkey…" : state === "sending" ? "Signing & submitting…" : "Sign with passkey & send"}
         </button>
 
+        <p className="o-muted" style={{ fontSize: "0.74rem", display: "flex", gap: 6, alignItems: "center" }}>
+          <IconSend width={13} height={13} />
+          Built unsigned by the API, signed on this device.
+        </p>
+
         {state === "done" && (
           <div className="o-card" style={{ borderLeft: "3px solid var(--good)" }}>
-            <div style={{ fontWeight: 700 }}>Payment confirmed on testnet</div>
+            <div style={{ fontWeight: 700 }}>Payment confirmed</div>
             <div className="o-muted o-mono" style={{ fontSize: "0.74rem", marginTop: 6, wordBreak: "break-all" }}>{msg}</div>
             <a className="o-btn o-btn-block" style={{ marginTop: 12 }} href={`https://stellar.expert/explorer/testnet/tx/${msg}`} target="_blank" rel="noreferrer">View on StellarExpert</a>
           </div>
@@ -113,7 +133,7 @@ export default function Send() {
             <div className="o-muted" style={{ fontSize: "0.85rem", marginTop: 4 }}>{msg}</div>
           </div>
         )}
-        {!secret ? (
+        {!hasKey ? (
           <p className="o-muted" style={{ fontSize: "0.78rem" }}>
             Tip: load a funded demo wallet on <Link href="/dashboard" style={{ color: "var(--accent-hi)" }}>Home</Link> to enable real testnet sends.
           </p>
@@ -121,6 +141,14 @@ export default function Send() {
       </form>
     </WalletFrame>
   );
+}
+
+/** Horizon rejects a signed envelope with machine codes; show the useful one. */
+function describeSubmitFailure(j: any): string {
+  const codes = j?.result_codes;
+  if (codes?.source === "tx_bad_seq") return "stale transaction (sequence moved) — try again";
+  if (codes?.source === "tx_insufficient_balance") return "not enough XLM";
+  return j?.error || "send failed";
 }
 
 function short(a: string) {

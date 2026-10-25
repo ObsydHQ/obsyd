@@ -1,0 +1,17 @@
+[package]
+name = "obsyd_factory"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Obsyd wallet factory: deterministic (counterfactual) deployment of passkey smart-contract wallets, so an address can be shown and used before it exists on chain."
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = { workspace = true }
+
+[dev-dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }

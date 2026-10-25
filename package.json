@@ -9,6 +9,13 @@
   "scripts": {
     "dev": "npm run dev --workspace wallet",
     "build": "npm run build --workspace wallet",
-    "start": "npm run start --workspace wallet"
+    "start": "npm run start --workspace wallet",
+    "typecheck": "npm run typecheck --workspace wallet",
+    "lint": "npm run lint --workspace wallet",
+    "test": "npm run test --workspace wallet",
+    "test:watch": "npm run test:watch --workspace wallet",
+    "contracts:check": "cargo check --manifest-path contracts/Cargo.toml --workspace --release --target wasm32v1-none",
+    "contracts:test": "cargo test --manifest-path contracts/Cargo.toml --workspace",
+    "contracts:build": "cargo build --manifest-path contracts/Cargo.toml --workspace --release --target wasm32v1-none"
   }
 }

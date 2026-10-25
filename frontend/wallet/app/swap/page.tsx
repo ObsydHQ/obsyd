@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WalletFrame } from "@/components/WalletFrame";
 import { IconSwap } from "@/components/Icons";
+import { localSigner, savedAddress } from "@/lib/wallet";
+import { swapExactTokens, toUnits, type PoolTokens } from "@/lib/soroban";
 
 type Token = { code: string; contract: string; balance: string };
 type Quote = {
   amountIn: string;
   amountOut: string;
+  amountInUnits: string;
   rate: string;
   minOut: string;
   reserves: [string, string];
@@ -22,7 +25,8 @@ const TOKENS: Token[] = [
 
 export default function Swap() {
   const [address, setAddress] = useState("");
-  const [secret, setSecret] = useState("");
+  const [hasKey, setHasKey] = useState(false);
+  const [pool, setPool] = useState<PoolTokens | null>(null);
   const [tokens, setTokens] = useState<Token[]>(TOKENS);
   const [from, setFrom] = useState("OBA");
   const [to, setTo] = useState("OBB");
@@ -35,8 +39,8 @@ export default function Swap() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setAddress(localStorage.getItem("obsyd.address") || "");
-    setSecret(localStorage.getItem("obsyd.secret") || "");
+    setAddress(savedAddress());
+    setHasKey(!!localSigner());
   }, []);
 
   const balFor = useCallback(
@@ -63,6 +67,7 @@ export default function Swap() {
         if (j.ok) {
           setQuote(j.quote);
           setTokens(j.tokens);
+          setPool(j.pool);
         } else {
           setQuote(null);
           setMsg(j.error || "quote failed");
@@ -115,8 +120,11 @@ export default function Swap() {
     }
   };
 
+  // The swap is built, authorised and signed in here: the private key never
+  // reaches the server, which only supplies the pool metadata and the quote.
   const execute = async () => {
-    if (!secret) {
+    const signer = localSigner();
+    if (!signer || !pool) {
       setStatus("error");
       setMsg("No funded testnet wallet loaded. Go to Home → “Load demo wallet”.");
       return;
@@ -125,21 +133,18 @@ export default function Swap() {
     setStatus("swapping");
     setMsg("");
     try {
-      const r = await fetch("/api/swap", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ from, to, amount: amt, secret }),
+      const fromAddr = pool.symbols[from] || from;
+      const toAddr = pool.symbols[to] || to;
+      const result = await swapExactTokens(signer, pool, {
+        from: fromAddr,
+        to: toAddr,
+        amountInUnits: quote.amountInUnits,
+        minOutUnits: toUnits(quote.minOut).toString(),
       });
-      const j = await r.json();
-      if (j.ok) {
-        setStatus("done");
-        setMsg(j.hash);
-        setAmt("");
-        setQuote(null);
-      } else {
-        setStatus("error");
-        setMsg(j.error || "swap failed");
-      }
+      setStatus("done");
+      setMsg(result.hash);
+      setAmt("");
+      setQuote(null);
     } catch (e: any) {
       setStatus("error");
       setMsg(String(e?.message || e));

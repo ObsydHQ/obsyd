@@ -4,11 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { WalletFrame } from "@/components/WalletFrame";
 import { IconSend, IconReceive, IconSwap, IconUsers } from "@/components/Icons";
+import { createLocalWallet, savedAddress } from "@/lib/wallet";
 
 type Bal = { code: string; type: string; amount: string; issuer?: string };
 type Act = { id: string; kind: string; title: string; sub: string; amount: string; when: string };
-
-const ADDR_KEY = "obsyd.address";
 
 export default function Dashboard() {
   const [address, setAddress] = useState<string>("");
@@ -44,33 +43,43 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem(ADDR_KEY) || "";
+    const saved = savedAddress();
     if (saved) {
       setAddress(saved);
       load(saved);
     }
   }, [load]);
 
+  // The keypair is generated in the browser; the server only ever sees the
+  // public address and is asked to fund it on testnet.
   const loadDemo = async () => {
     setStatus("loading");
     setMsg("");
-    const r = await fetch("/api/demo");
-    const j = await r.json();
-    if (j.address) {
-      localStorage.setItem(ADDR_KEY, j.address);
-      if (j.secret) localStorage.setItem("obsyd.secret", j.secret);
-      setAddress(j.address);
-      load(j.address);
-    } else {
+    const { address: fresh } = createLocalWallet();
+    setAddress(fresh);
+    try {
+      const r = await fetch("/api/fund", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address: fresh }),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        load(fresh);
+      } else {
+        setStatus("error");
+        setMsg(j.error || "could not fund the demo wallet");
+      }
+    } catch (e: any) {
       setStatus("error");
-      setMsg(j.error || "could not create demo wallet");
+      setMsg(String(e?.message || e));
     }
   };
 
   const connect = (e: React.FormEvent) => {
     e.preventDefault();
     if (!address) return;
-    localStorage.setItem(ADDR_KEY, address);
+    localStorage.setItem("obsyd.address", address);
     load(address);
   };
 

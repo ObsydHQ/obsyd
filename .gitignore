@@ -5,6 +5,14 @@ out/
 dist/
 build/
 
+# rust: Cargo.lock is committed (it pins ed25519-dalek for the SDK's testutils),
+# build artifacts are not.
+contracts/target/
+
+# soroban-sdk writes a ledger snapshot per test run. They are derived from
+# test.rs, so they would churn on every contract change.
+contracts/**/test_snapshots/
+
 # env & secrets
 .env
 .env.local
@@ -38,3 +46,7 @@ coverage/
 
 # Vendored reference clone (study only — NOT part of the shipped Obsyd codebase)
 .reference/
+
+# Local brand scratch: the org avatar is uploaded to GitHub, it is not repo content
+obsyd-org-avatar.png
+vibe_images/

@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
 import { config } from "@/lib/config";
-import { loadPool, quoteUnits, toUnits, tokenBalance, fromUnits } from "@/lib/swap";
+import { loadPool, publicPool, quoteUnits, toUnits, fromUnits } from "@/lib/swap";
+import { tokenBalance } from "@/lib/soroban";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/swap/quote?from=<code|address>&to=<code|address>&amount=1.5&address=G...
- * Quotes a live Soroswap swap against the provisioned pool. Optionally returns
- * the swapper's balances so the UI can cap the input.
+ * GET /api/swap/quote?from=<code|address>&to=<code|address>&amount=1.5&address=G…
+ *
+ * Quotes a live Soroswap swap against the provisioned pool and returns the
+ * public half of the pool config, which is everything the browser needs to
+ * build and sign the swap itself. Read-only: no secrets in, no secrets out.
  */
 export async function GET(req: Request) {
-  if (config.network !== "testnet") {
-    return NextResponse.json({ ok: false, error: "swap demo runs on testnet only" }, { status: 400 });
-  }
   const pool = loadPool();
   if (!pool) {
-    return NextResponse.json({ ok: false, error: "pool not provisioned (run scripts/provision-pool.mjs)" }, { status: 503 });
+    return NextResponse.json(
+      { ok: false, error: "pool not provisioned (run scripts/provision-pool.mjs)" },
+      { status: 503 },
+    );
   }
 
   const url = new URL(req.url);
@@ -45,14 +48,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid amount" }, { status: 400 });
   }
 
+  // The simulation is paid for by the treasury account: `address` may be brand
+  // new, and a quote must not depend on the caller having an account entry yet.
   try {
-    const quote = await quoteUnits(pool, from, to, units);
+    const quote = await quoteUnits(pool, pool.treasury, from, to, units);
     const codes = Object.keys(pool.symbols);
     const balOba = address ? await tokenBalance(address, pool.A).catch(() => "0") : "0";
     const balObb = address ? await tokenBalance(address, pool.B).catch(() => "0") : "0";
     return NextResponse.json({
       ok: true,
+      network: config.network,
       quote,
+      pool: publicPool(pool),
       tokens: [
         { code: codes[0], contract: pool.A, balance: fromUnits(BigInt(balOba)) },
         { code: codes[1], contract: pool.B, balance: fromUnits(BigInt(balObb)) },

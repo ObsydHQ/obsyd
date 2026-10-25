@@ -1,0 +1,5 @@
+.next/
+out/
+node_modules/
+# Node CLI helpers (provision-pool / probe-swap) — plain ESM, not app code.
+scripts/

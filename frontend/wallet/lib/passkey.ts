@@ -1,7 +1,9 @@
 // Obsyd — passkey identity layer (client-only, original).
 // Registers a real WebAuthn credential, extracts its P-256 public key, and derives
-// a deterministic wallet identity from that key. No on-chain signing here (that is
-// the deferred phase 5c contract work) — this file establishes the key + identity.
+// a deterministic wallet identity from that key. The credential this produces is
+// exactly what contracts/obsyd_account verifies on-chain (secp256r1 over the host
+// auth payload); wiring the assertion into __check_auth is tracked in issue #2,
+// and until then the demo wallet signs with a device-local ed25519 key.
 
 const ID_KEY = "obsyd.identity";
 const CRED_KEY = "obsyd.passkey.id";

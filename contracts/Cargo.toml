@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = ["obsyd_account", "obsyd_factory"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/ObsydHQ/obsyd"
+
+[workspace.dependencies]
+soroban-sdk = "22.0.11"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+# Local development builds keep debug info so `soroban contract inspect` and
+# backtraces stay readable; CI builds the release profile above.
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

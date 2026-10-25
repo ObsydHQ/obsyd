@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fundTestnet, isValidStellarAddress } from "@/lib/stellar";
 import { config } from "@/lib/config";
+import { readBody, refuse } from "@/lib/custody";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,10 +13,11 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  let address = "";
-  try {
-    address = (await req.json())?.address?.trim() || "";
-  } catch {
+  const body = await readBody(req);
+  const refused = refuse(body);
+  if (refused) return refused;
+  let address = String(body?.address || "").trim();
+  if (!address) {
     address = new URL(req.url).searchParams.get("address")?.trim() || "";
   }
 

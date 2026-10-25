@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The contracts are the product. Build the deployable wasm and run the tests
+  # that hold real P-256 / ed25519 signatures.
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: contracts
+      - name: Type-check (wasm target)
+        run: cargo check --locked --workspace --release --target wasm32v1-none
+      - name: Type-check including tests (host target)
+        run: cargo check --locked --workspace --tests
+      - name: Unit tests
+        run: cargo test --locked --workspace
+      - name: Build contract wasm
+        run: cargo build --locked --workspace --release --target wasm32v1-none
+      - uses: actions/upload-artifact@v4
+        with:
+          name: obsyd-contracts-wasm
+          path: |
+            contracts/target/wasm32v1-none/release/obsyd_account.wasm
+            contracts/target/wasm32v1-none/release/obsyd_factory.wasm
+          if-no-files-found: error
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+
+  # The invariant is that no key material ever enters the repo. This is a guard
+  # against a well-meaning "temporarily hardcode the treasury to debug" commit.
+  secret-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject committed demo-pool config
+        run: |
+          if [ -f frontend/wallet/scripts/pool.json ]; then
+            echo "::error::pool.json holds a treasury secret key and must never be committed"; exit 1
+          fi
+      - name: Scan for Stellar strkeys and private keys in tracked files
+        run: |
+          git ls-files -z | xargs -0 -r grep -InE 'S[A-Z2-7]{55}|BEGIN (EC |OPENSSH |RSA )?PRIVATE KEY' && {
+            echo "::error::a secret-looking string is tracked — see the lines above"; exit 1; } || true
+      - name: Scan for a secret crossing the API boundary
+        run: |
+          # The device signs. No API route may build a keypair from request data,
+          # and only lib/wallet.ts may read the device key.
+          if grep -rnE 'Keypair\.(fromSecret|decodeSeed)|StrKey\.decodeSecretSeed' frontend/wallet/app/api --include=*.ts; then
+            echo "::error::an API route constructs a keypair from a secret"; exit 1
+          fi
+          if grep -rn 'obsyd\.secret' frontend/wallet/app frontend/wallet/components --include=*.ts --include=*.tsx | grep -v 'lib/wallet'; then
+            echo "::error::app code reads the device key outside lib/wallet.ts"; exit 1
+          fi
