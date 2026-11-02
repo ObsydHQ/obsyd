@@ -119,9 +119,9 @@ routes of this same app.
 ## Known gaps
 
 The demo wallet's signer is still a device-local ed25519 key; the passkey path
-in `obsyd_account` is implemented and unit-tested but not yet wired into the UI,
-which needs the contract deployed and a client that assembles a WebAuthn
-assertion into a `SorobanAuthorizationEntry`. Balances are classic-channel only
+in `obsyd_account` is implemented, unit-tested and proven on testnet by
+`scripts/passkey-live.mjs`, which assembles a browser WebAuthn assertion into a
+`SorobanAuthorizationEntry`; that client code is not yet in the UI. Balances are classic-channel only
 (SAC balances are not merged into the dashboard). `scripts/pool.json` binds the
 swap demo to a provisioned testnet pair. `SECURITY.md` lists these with the
 threat model.

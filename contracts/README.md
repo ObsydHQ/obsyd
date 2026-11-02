@@ -20,7 +20,7 @@ contracts/
 │  ├─ lib.rs                  # __check_auth, admin surface, views
 │  ├─ webauthn.rs             # assertion parsing + secp256r1 verification
 │  ├─ storage.rs              # DataKey, policy/session/limit/guardian state, TTL
-│  └─ test.rs                 # 38 unit tests with real P-256 / ed25519 fixtures
+│  └─ test.rs                 # 40 unit tests with real P-256 / ed25519 fixtures
 └─ obsyd_factory/src/{lib.rs,test.rs}
 ```
 

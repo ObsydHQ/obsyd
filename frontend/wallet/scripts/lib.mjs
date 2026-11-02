@@ -28,7 +28,7 @@ export async function fund(pub) {
 }
 
 // Simulate, sign auth, assemble, submit, poll. Returns the getTransaction response.
-export async function submitOp(kp, op, { readCreated = false } = {}) {
+export async function submitOp(kp, op, { readCreated = false, returnValue = false } = {}) {
   const pub = kp.publicKey();
   const account = await loadAccount(pub);
   const origSeq = account.sequenceNumber();
@@ -89,6 +89,9 @@ export async function submitOp(kp, op, { readCreated = false } = {}) {
     if (typeof tr === "string") tr = xdr.TransactionResult.fromXDR(tr, "base64");
     const created = tr.result().results()[0].tr().invokeHostFunctionResult().success().createdContract();
     return { hash: res.hash, created: created.map((h) => StrKey.encodeContract(h.buffer ?? h)) };
+  }
+  if (returnValue) {
+    return { hash: res.hash, returnValue: done.returnValue ? scValToNative(done.returnValue) : null };
   }
   return { hash: res.hash };
 }

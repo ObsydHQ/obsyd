@@ -28,10 +28,14 @@ use crate::{AccountError, ObsydAccount, ObsydAccountClient};
 
 const RP_ID: &[u8] = b"obsyd.app";
 const ORIGIN: &str = "https://obsyd.app";
-const UP: u8 = 0x01;
-const UV: u8 = 0x02;
-const BACKUP_ELIGIBLE: u8 = 0x04;
-const ATTESTED: u8 = 0x40;
+// WebAuthn §6.1 flag bits, written out independently of webauthn.rs so a wrong
+// constant there cannot be mirrored here and still pass.
+const UP: u8 = 1 << 0;
+const RFU1: u8 = 1 << 1;
+const UV: u8 = 1 << 2;
+const BACKUP_ELIGIBLE: u8 = 1 << 3;
+const BACKED_UP: u8 = 1 << 4;
+const ATTESTED: u8 = 1 << 6;
 
 fn sha256(parts: &[&[u8]]) -> [u8; 32] {
     let mut h = Sha256::new();
@@ -400,6 +404,29 @@ fn user_verification_is_required_when_policy_says_so() {
     f.flags = UP;
     let sig = build_assertion(&env, &auth, &payload, &f);
     assert_auth_err(&env, &wallet, &payload, &sig, AccountError::UserVerificationRequired);
+}
+
+#[test]
+fn the_reserved_bit_is_not_user_verification() {
+    // A real authenticator never sets bit 1; it must not satisfy a UV policy.
+    let env = Env::default();
+    let (wallet, auth) = deploy(&env);
+    let payload = BytesN::from_array(&env, &[7u8; 32]);
+    let mut f = Fixture::valid();
+    f.flags = UP | RFU1;
+    let sig = build_assertion(&env, &auth, &payload, &f);
+    assert_auth_err(&env, &wallet, &payload, &sig, AccountError::UserVerificationRequired);
+}
+
+#[test]
+fn a_backed_up_credential_is_rejected_by_default() {
+    let env = Env::default();
+    let (wallet, auth) = deploy(&env);
+    let payload = BytesN::from_array(&env, &[7u8; 32]);
+    let mut f = Fixture::valid();
+    f.flags = UP | UV | BACKUP_ELIGIBLE | BACKED_UP;
+    let sig = build_assertion(&env, &auth, &payload, &f);
+    assert_auth_err(&env, &wallet, &payload, &sig, AccountError::BackupKeyNotAllowed);
 }
 
 #[test]

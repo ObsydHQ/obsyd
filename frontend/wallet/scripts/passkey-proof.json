@@ -1,0 +1,85 @@
+{
+  "network": "testnet",
+  "browser": "Edg/156.0.4314.58",
+  "origin": "http://localhost:5179",
+  "rpId": "localhost",
+  "factory": "CACLBS5BDDY5ADUJJMATCS6GUM5Z2MU6UP7MSMEQ4GDBVXAYISQSP6PV",
+  "accountWasmHash": "61ab2ce34d0d85c0b64f8064647116f8b30f67062096adde06a219a6f24d0494",
+  "wallet": "CC2EP7VLMPGDPOMEPXD3JVV247LKITMLICZZ6T3NMO2OXRTBHBOR67OR",
+  "recipient": "GCPOEP2O3N3XRY7CIEUVUFKTM3NE3MQ2BTSTQ2FJNHPR6FQXYBGOCV6Y",
+  "relayer": "GAUD2R7XMV6EMLBUHF22FX56TVBUH3Y5EYSFYK7GWVL4AUHG6NBQ3W5X",
+  "passkeyPublicKey": "04e06f752086688eebb0d895a3cde55431927c82dab3c4a73f66ef98ca6463574db424bc26a75dfdbc9722cf83044fa89a07ffebb59258944e5c09a66b7a8a0eb4",
+  "tx": {
+    "uploadAccount": "6fd4c12f561d99a3896625a0535ee95d3ef7e54e475954fdfe91fe5d15f3168d",
+    "uploadFactory": "d09fed1cfc573542352d615c6e4883b2ac31894cb43bbd93f190428e0c221483",
+    "deployFactory": "afe215661048a403d6e6569b4c6d06dade534e2647a414f64698e6f5a25d2cf8",
+    "pinWasm": "f9283b8aeb73d7bad6e643bd2747cc517fd4db55f4833cea4bb6a8e53f0e6004",
+    "createWallet": "41939dc8e915f728e391acbe855f901f4344af593a16571e77a2b1e4ab441daa",
+    "fundWallet": "40b418d35d265c93fe57b75d8553357e3d8fadf49e50fbf7588685bb1ce2a84f",
+    "passkeyTransfer": "61a1d195ff8978967d1a567d9a84cb1fe09730848e14f217d3605671877b0070"
+  },
+  "authCredentialArm": "sorobanCredentialsAddressV2",
+  "clientDataJSON": "{\"type\":\"webauthn.get\",\"challenge\":\"dnSUPK_zZo2ebHCqKTz6yEIploWctxpZOqCRU5ZDB80\",\"origin\":\"http://localhost:5179\",\"crossOrigin\":false}",
+  "checks": [
+    {
+      "name": "factory deployed",
+      "pass": true,
+      "detail": "CACLBS5BDDY5ADUJJMATCS6GUM5Z2MU6UP7MSMEQ4GDBVXAYISQSP6PV"
+    },
+    {
+      "name": "factory pinned to obsyd_account build",
+      "pass": true,
+      "detail": "61ab2ce34d0d85c0b64f8064647116f8b30f67062096adde06a219a6f24d0494"
+    },
+    {
+      "name": "passkey created in browser",
+      "pass": true,
+      "detail": "Edg/156.0.4314.58, ES256, credential wJLDJhO8psFA3Fh_…"
+    },
+    {
+      "name": "wallet deployed at the counterfactual address",
+      "pass": true,
+      "detail": "CC2EP7VLMPGDPOMEPXD3JVV247LKITMLICZZ6T3NMO2OXRTBHBOR67OR"
+    },
+    {
+      "name": "wallet funded",
+      "pass": true,
+      "detail": "100 XLM"
+    },
+    {
+      "name": "challenge = base64url(Soroban auth payload)",
+      "pass": true,
+      "detail": "dnSUPK_zZo2ebHCqKTz6yEIploWctxpZOqCRU5ZDB80"
+    },
+    {
+      "name": "enforcing simulation runs __check_auth and passes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "passkey-signed transfer succeeded on testnet",
+      "pass": true,
+      "detail": "61a1d195ff8978967d1a567d9a84cb1fe09730848e14f217d3605671877b0070"
+    },
+    {
+      "name": "25 XLM left the wallet and reached the recipient",
+      "pass": true,
+      "detail": "wallet 75 XLM, recipient +25 XLM"
+    },
+    {
+      "name": "wallet advanced the passkey nonce",
+      "pass": true,
+      "detail": "nonce 1"
+    },
+    {
+      "name": "replayed assertion refused by the wallet (NonceMismatch)",
+      "pass": true,
+      "detail": "Error(Contract, #16) NonceMismatch"
+    },
+    {
+      "name": "assertion re-pointed at a different amount refused (ChallengeMismatch)",
+      "pass": true,
+      "detail": "Error(Contract, #11) ChallengeMismatch"
+    }
+  ]
+}

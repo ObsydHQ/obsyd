@@ -62,8 +62,8 @@ is written.
 | 2 | `auth_data.len() >= 37` | `AuthDataTooShort` |
 | 3 | `auth_data[0..32] == policy.rp_id_hash` | `WrongRpId` |
 | 4 | UP flag when required (`0x01`) | `UserPresenceRequired` |
-| 5 | UV flag when required (`0x02`) | `UserVerificationRequired` |
-| 6 | `BE`/`BS` (`0x04`/`0x08`) rejected unless `allow_backup_eligible` | `BackupKeyNotAllowed` |
+| 5 | UV flag when required (`0x04`, bit 2) | `UserVerificationRequired` |
+| 6 | `BE`/`BS` (`0x08`/`0x10`) rejected unless `allow_backup_eligible` | `BackupKeyNotAllowed` |
 | 7 | `AT` (`0x40`) must be clear — attested data is for registration | `AuthDataAttested` |
 | 8 | `clientDataJSON` contains `"type":"webauthn.get"` | `BadClientData` |
 | 9 | contains `"challenge":"<base64url(signature_payload)>"` (43 chars, unpadded) | `ChallengeMismatch` |

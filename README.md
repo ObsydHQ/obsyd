@@ -16,18 +16,46 @@ counterfactually, so a wallet address is knowable before the wallet exists.
 Alongside it: session keys with per-token spend caps, timelocked guardian
 recovery, and atomic `approve` + `swap` batching.
 
-What is finished and what is not, stated plainly: the contracts are written and
-tested (48 unit tests over real P-256 / ed25519 signatures) but **not yet
-deployed**, and the testnet account the app funds today is still a device
-keypair, not one of those contracts. The custody boundary below is real either
-way, and every screen that is still mock says so on screen.
+What is finished and what is not, stated plainly: the contracts are written,
+tested (50 unit tests over real P-256 / ed25519 signatures) and **proven on
+testnet** — a passkey created in a real browser authorised a payment out of a
+deployed `obsyd_account` with no other key involved (see
+[Proven on testnet](#proven-on-testnet)). The **app** is not wired to them yet:
+the testnet account it funds today is still a device keypair. The custody
+boundary below is real either way, and every screen that is still mock says so
+on screen.
+
+## Proven on testnet
+
+`node frontend/wallet/scripts/passkey-live.mjs` deploys the factory and account
+contracts, creates a passkey in Microsoft Edge (headless, WebAuthn virtual
+authenticator — the browser's own WebAuthn stack builds the assertion), deploys
+a wallet for it at its counterfactual address, funds it, and sends XLM out of it
+signed by the passkey alone. The fee is paid by a separate relayer key that has
+no authority over the wallet. It then checks that the wallet refuses a replayed
+assertion (`NonceMismatch`) and an assertion re-pointed at a different amount
+(`ChallengeMismatch`). Results are written to `scripts/passkey-proof.json`.
+
+Reference run (2026-11-02, 12/12 checks):
+
+| | |
+| --- | --- |
+| Passkey-signed transfer (25 XLM) | [`61a1d195…0070`](https://stellar.expert/explorer/testnet/tx/61a1d195ff8978967d1a567d9a84cb1fe09730848e14f217d3605671877b0070) |
+| Wallet contract | [`CC2EP7VL…67OR`](https://stellar.expert/explorer/testnet/contract/CC2EP7VLMPGDPOMEPXD3JVV247LKITMLICZZ6T3NMO2OXRTBHBOR67OR) |
+| Factory contract | `CACLBS5BDDY5ADUJJMATCS6GUM5Z2MU6UP7MSMEQ4GDBVXAYISQSP6PV` |
+
+What this does **not** cover: the authenticator is virtual, not Windows Hello
+or Touch ID (the contract sees the same bytes either way, but no human biometric
+was in the loop); the DER→raw low-s signature conversion and `Assertion`
+encoding live in the script, not yet in `lib/passkey.ts`; and testnet resets
+periodically, so the links above will eventually go dead — rerun the script.
 
 ---
 
 ## What's inside
 
-- **Contracts (Rust / Soroban)** — passkey account + factory, 48 unit tests
-  built on genuine P-256 / ed25519 signatures. See
+- **Contracts (Rust / Soroban)** — passkey account + factory, 50 unit tests
+  built on genuine P-256 / ed25519 signatures, plus a live testnet proof. See
   [`docs/PASSKEY_CONTRACT.md`](./docs/PASSKEY_CONTRACT.md).
 - **Passkey registration** — Settings → Passkeys creates a real WebAuthn
   credential (Face ID / fingerprint / Windows Hello) and derives the wallet's

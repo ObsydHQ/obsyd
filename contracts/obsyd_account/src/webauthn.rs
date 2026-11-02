@@ -28,12 +28,13 @@ use soroban_sdk::{contracttype, Bytes, BytesN, Env};
 use crate::storage::Policy;
 use crate::AccountError;
 
-/// Authenticator data flags (CTAP2, byte 32 of authData).
-const FLAG_UP: u8 = 0x01;
-const FLAG_UV: u8 = 0x02;
-const FLAG_BE: u8 = 0x04;
-const FLAG_BS: u8 = 0x08;
-const FLAG_AT: u8 = 0x40;
+/// Authenticator data flags (WebAuthn §6.1, byte 32 of authData).
+/// Bit 1 (0x02) is reserved-for-future-use: no authenticator sets it.
+const FLAG_UP: u8 = 0x01; // bit 0: user present
+const FLAG_UV: u8 = 0x04; // bit 2: user verified
+const FLAG_BE: u8 = 0x08; // bit 3: backup eligible
+const FLAG_BS: u8 = 0x10; // bit 4: backed up
+const FLAG_AT: u8 = 0x40; // bit 6: attested credential data
 
 /// Minimum authData length: rpIdHash + flags + counter.
 const AUTH_DATA_MIN: u32 = 37;

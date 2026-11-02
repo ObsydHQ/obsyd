@@ -9,8 +9,21 @@ All notable changes to Obsyd are documented here. The format is
 The passkey wallet now has the contracts its name promised, and no secret key
 travels over HTTP any more.
 
+### Fixed
+
+- **WebAuthn flag bits in `obsyd_account`** — UV was read from bit 1 (`0x02`,
+  reserved, never set) instead of bit 2 (`0x04`), and BE/BS from `0x04`/`0x08`
+  instead of `0x08`/`0x10`. With the default policy no real passkey could
+  authorise anything. The unit tests built fixtures from the same wrong values;
+  they now spell the bits out independently and cover the reserved bit and BS.
+  Found by the first live testnet run.
+
 ### Added
 
+- **`scripts/passkey-live.mjs`** — end-to-end testnet proof: deploys the
+  contracts, creates a passkey in a real Chromium browser, deploys a wallet for
+  it and sends XLM out of it authorised by the passkey alone, then checks that a
+  replayed and a re-pointed assertion are refused by the wallet.
 - **`contracts/obsyd_account`** — a Soroban custom account whose `__check_auth`
   verifies real WebAuthn assertions: `rp_id_hash` binding, UP/UV/backup flag
   policy, `webauthn.get` ceremony type, the host `signature_payload` as the
@@ -32,7 +45,7 @@ travels over HTTP any more.
 - **`contracts/obsyd_factory`** — counterfactual deployment
   (`deploy_v2`, `salt = sha256(public_key)`), so `preview_address` can hand out a
   wallet address before the wallet exists, plus a credential→address registry.
-- **Contract tests** (`contracts/*/src/test.rs`) — 48 unit tests (38 account, 10
+- **Contract tests** (`contracts/*/src/test.rs`) — 50 unit tests (40 account, 10
   factory) that build genuine P-256 and ed25519 signatures with `p256` /
   `ed25519-dalek` fixtures and
   drive `__check_auth` through the SDK's auth checks, including the negative
