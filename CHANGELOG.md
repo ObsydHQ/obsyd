@@ -9,6 +9,15 @@ All notable changes to Obsyd are documented here. The format is
 The passkey wallet now has the contracts its name promised, and no secret key
 travels over HTTP any more.
 
+### Changed
+
+- **Issues are maintainer-filed.** The bug-report template is gone and blank
+  issues are disabled; the new-issue chooser only links to private
+  vulnerability reporting and to the contributing guide. `issue-gate.yml`
+  closes, with an explanation, any issue opened by someone who is not an
+  owner, member or collaborator. Contributors raise findings in their PR or on
+  the issue they are working on.
+
 ### Fixed
 
 - **WebAuthn flag bits in `obsyd_account`** — UV was read from bit 1 (`0x02`,

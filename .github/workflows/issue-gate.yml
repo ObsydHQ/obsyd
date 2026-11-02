@@ -1,0 +1,34 @@
+name: issue-gate
+
+# Issues are maintainer-filed (see CONTRIBUTING.md, "Issues are maintainer-filed").
+# Templates alone can't stop someone opening an issue from a direct URL, so this
+# closes any issue whose author is not an owner, member or collaborator.
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  gate:
+    if: >-
+      github.event.issue.author_association != 'OWNER' &&
+      github.event.issue.author_association != 'MEMBER' &&
+      github.event.issue.author_association != 'COLLABORATOR'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close with an explanation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$NUMBER" -R "$REPO" --body "Thanks for taking the time. Issues on Obsyd are filed by maintainers only, so this one has been closed automatically.
+
+          - **Security problem?** Please report it privately: https://github.com/$REPO/security/advisories/new (do not repost it publicly).
+          - **Found something while working on an issue?** Mention it in your pull request description or in a comment on that issue, and a maintainer will file it.
+
+          See [CONTRIBUTING.md](https://github.com/$REPO/blob/main/CONTRIBUTING.md#issues-are-maintainer-filed)."
+          gh issue close "$NUMBER" -R "$REPO" --reason "not planned"

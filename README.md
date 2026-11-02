@@ -187,7 +187,8 @@ management screen, and hardware-key assertion support. See
 ## Contributing
 
 Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) — dev environment, the exact
-commands CI runs, and the review notes for contract code. Good first steps:
+commands CI runs, and the review notes for contract code. Issues are filed by
+maintainers only: pick an open one rather than opening your own. Good first steps:
 a contract test for a path you think is under-specified, or a UI screen for the
 session/limit surface the contract already exposes.
 

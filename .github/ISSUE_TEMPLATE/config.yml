@@ -1,0 +1,11 @@
+# Issues on this repo are filed by maintainers only. Every Drips Wave task is
+# already an issue; contributors pick one up and open a PR. Issues opened by
+# anyone else are closed automatically by .github/workflows/issue-gate.yml.
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/ObsydHQ/obsyd/security/advisories/new
+    about: Anything that could move funds or bypass authorisation. Never file these publicly.
+  - name: Found a bug or have an idea while contributing?
+    url: https://github.com/ObsydHQ/obsyd/blob/main/CONTRIBUTING.md#issues-are-maintainer-filed
+    about: Put it in your PR description or comment on the issue you are working on. A maintainer files it if needed.

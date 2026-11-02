@@ -68,9 +68,24 @@ infrastructure.
 
 The roadmap is the issue tracker. Features that are explicitly **out** of scope
 for now: an AI agent, shielded/private sends, vaults, multisig, NFTs, pool
-management, bills, dApp/WalletConnect bridges. If you want one of those, open an
-issue to discuss it before writing code — a large unrequested PR is usually
-closed rather than reviewed.
+management, bills, dApp/WalletConnect bridges. Work on an existing issue; a
+large unrequested PR is usually closed rather than reviewed.
+
+## Issues are maintainer-filed
+
+Every task, including each Drips Wave task, is already an issue, written and
+labelled by a maintainer. Contributors don't open issues: the new-issue form is
+disabled, and an issue opened by anyone other than a maintainer is closed
+automatically (`.github/workflows/issue-gate.yml`).
+
+- **To contribute:** pick an open issue, comment that you're taking it, and
+  open one PR that says `Closes #<number>`.
+- **Found a bug or have an idea along the way?** Put it in your PR description,
+  or comment on the issue you're working on. A maintainer will file it if it's
+  worth doing. Don't widen your PR to fix it unless asked.
+- **Security problem?** Report it privately through
+  [GitHub's advisory form](https://github.com/ObsydHQ/obsyd/security/advisories/new),
+  never in a PR, comment or issue. See [`SECURITY.md`](./SECURITY.md).
 
 ## Review notes for contract code
 
