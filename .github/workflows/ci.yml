@@ -75,9 +75,7 @@ jobs:
             echo "::error::pool.json holds a treasury secret key and must never be committed"; exit 1
           fi
       - name: Scan for Stellar strkeys and private keys in tracked files
-        run: |
-          git ls-files -z | xargs -0 -r grep -InE 'S[A-Z2-7]{55}|BEGIN (EC |OPENSSH |RSA )?PRIVATE KEY' && {
-            echo "::error::a secret-looking string is tracked — see the lines above"; exit 1; } || true
+        run: ./scripts/secret-scan.sh
       - name: Scan for a secret crossing the API boundary
         run: |
           # The device signs. No API route may build a keypair from request data,

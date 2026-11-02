@@ -123,11 +123,17 @@ automatically (`.github/workflows/issue-gate.yml`).
 By contributing you agree that your contribution is licensed under the MIT
 license, the same as Obsyd itself.
 
-## Git hooks (optional)
+## Git hooks
+
+`npm install` enables `.githooks/pre-commit` automatically via the root `prepare`
+script (`git config core.hooksPath .githooks`). If you only work on `contracts/`
+and skip `npm install`, enable it once manually:
 
 ```bash
 git config core.hooksPath .githooks
 ```
 
-`.githooks/pre-commit` runs a secret scan so a `pool.json`-style key can never be
-staged by accident.
+`.githooks/pre-commit` and CI share `scripts/secret-scan.sh` so a `pool.json`-style
+key, Stellar secret seed, or PEM private key block (including `ENCRYPTED PRIVATE KEY`)
+can never be staged by accident, while commits that remove an accidentally committed
+key are allowed through.
