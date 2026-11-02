@@ -145,14 +145,14 @@ describe("what the API accepts", () => {
   it("refuse() rejects an unknown field and a secret in the allowed ones", () => {
     // Positive fixtures for the guard itself: it must not be a no-op.
     // Any unexpected field is refused, whatever its value holds.
-    expect(refuse({ address: "GABC", secret: "S".repeat(56) } as any)).not.toBeNull();
-    expect(refuse({ xdr: "AAA", memo: "hi" } as any)).not.toBeNull();
+    expect(refuse({ address: "GABC", secret: "S".repeat(56) })).not.toBeNull();
+    expect(refuse({ xdr: "AAA", memo: "hi" })).not.toBeNull();
     // A seed-shaped value inside a field the endpoint DOES read is the case that
     // matters: without the shape check the route would use `address`, ignore the
     // key, and say nothing — a silent accept is what a custody boundary can't do.
-    expect(refuse({ address: "S".repeat(56) } as any)).not.toBeNull();
-    expect(refuse({ from: "SA" + "B".repeat(54), to: "GDEF", amount: "1" } as any)).not.toBeNull();
-    expect(refuse({ from: "GABC", to: "GDEF", amount: "1" } as any)).toBeNull();
+    expect(refuse({ address: "S".repeat(56) })).not.toBeNull();
+    expect(refuse({ from: "SA" + "B".repeat(54), to: "GDEF", amount: "1" })).not.toBeNull();
+    expect(refuse({ from: "GABC", to: "GDEF", amount: "1" })).toBeNull();
     expect(refuse(null)).toBeNull();
   });
 

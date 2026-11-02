@@ -43,6 +43,6 @@ describe("what the API is allowed to receive", () => {
     // signature, never a key.
     const relayed = new Transaction(tx.toXDR(), Networks.TESTNET);
     expect(relayed.signatures).toHaveLength(1);
-    expect(relayed.sequence.toString()).toBe("2", "the builder advances the source sequence");
+    expect(relayed.sequence.toString(), "the builder advances the source sequence").toBe("2");
   });
 });
