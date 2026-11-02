@@ -1,5 +1,7 @@
-import { readFileSync, readdirSync, statSync } from "fs";
-import { join } from "path";
+import { execFileSync } from "child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join, resolve } from "path";
 import { describe, expect, it } from "vitest";
 import { publicPool, type PoolConfig } from "../swap";
 import { refuse } from "../custody";
@@ -216,5 +218,110 @@ describe("who does the signing", () => {
   it("the demo treasury config stays out of git", () => {
     const ignored = readFileSync(join("..", "..", ".gitignore"), "utf8");
     expect(ignored).toMatch(/frontend\/wallet\/scripts\/pool\.json/);
+  });
+});
+
+describe("pre-commit and CI secret scan", () => {
+  const repoRoot = resolve("..", "..");
+  const scanScriptPath = join(repoRoot, "scripts", "secret-scan.sh");
+  const hookPath = join(repoRoot, ".githooks", "pre-commit");
+  const ciPath = join(repoRoot, ".github", "workflows", "ci.yml");
+  const rootPkgPath = join(repoRoot, "package.json");
+  const pemBlock = (kind = "") => ["-----BEGIN", kind, "PRIVATE KEY-----"].filter(Boolean).join(" ");
+
+  function shBin(): string {
+    if (process.platform !== "win32") return "sh";
+    const gitSh = "C:\\Program Files\\Git\\bin\\sh.exe";
+    return existsSync(gitSh) ? gitSh : "sh";
+  }
+
+  it("shares one secret pattern between scripts/secret-scan.sh, the hook, and CI", () => {
+    const scanSrc = readFileSync(scanScriptPath, "utf8");
+    const hookSrc = readFileSync(hookPath, "utf8");
+    const ciSrc = readFileSync(ciPath, "utf8");
+
+    const match = scanSrc.match(/^SECRET_PATTERN='([^']+)'/m);
+    expect(match).not.toBeNull();
+    const pattern = new RegExp(match![1]);
+
+    // Positive fixtures: Stellar secret seed + PEM private keys (including ENCRYPTED).
+    expect(pattern.test("S" + "A".repeat(55))).toBe(true);
+    expect(pattern.test(pemBlock())).toBe(true);
+    expect(pattern.test(pemBlock("RSA"))).toBe(true);
+    expect(pattern.test(pemBlock("EC"))).toBe(true);
+    expect(pattern.test(pemBlock("OPENSSH"))).toBe(true);
+    expect(pattern.test(pemBlock("ENCRYPTED"))).toBe(true);
+
+    // Negative fixtures: public Stellar and contract addresses.
+    expect(pattern.test("G" + "A".repeat(55))).toBe(false);
+    expect(pattern.test("C" + "A".repeat(55))).toBe(false);
+
+    // Hook sources scripts/secret-scan.sh and filters to added lines only.
+    expect(hookSrc).toContain("scripts/secret-scan.sh");
+    expect(hookSrc).toContain("grep '^+'");
+    expect(hookSrc).toContain("grep -v '^+++'");
+    expect(hookSrc).toContain('"$SECRET_PATTERN"');
+
+    // CI invokes ./scripts/secret-scan.sh instead of maintaining a separate regex.
+    expect(ciSrc).toContain("./scripts/secret-scan.sh");
+  });
+
+  it("enables .githooks automatically on npm install via root prepare script", () => {
+    const pkg = JSON.parse(readFileSync(rootPkgPath, "utf8"));
+    expect(pkg.scripts?.prepare).toBe("git config core.hooksPath .githooks || true");
+  });
+
+  it("blocks adding a seed or ENCRYPTED PRIVATE KEY but allows removing one", () => {
+    const tmp = mkdtempSync(join(tmpdir(), "obsyd-hook-test-"));
+    const sh = shBin();
+    const git = (...args: string[]) => execFileSync("git", args, { cwd: tmp, stdio: "pipe" });
+    const runHook = (): number => {
+      try {
+        execFileSync(sh, [hookPath], { cwd: tmp, stdio: "pipe" });
+        return 0;
+      } catch (err: any) {
+        return err.status ?? 1;
+      }
+    };
+
+    try {
+      git("init", "-q");
+      git("config", "user.email", "test@obsyd.local");
+      git("config", "user.name", "Obsyd Test");
+
+      // 1. Adding a public G... address passes.
+      const noteFile = join(tmp, "note.txt");
+      writeFileSync(noteFile, `public=${"G" + "A".repeat(55)}\n`, "utf8");
+      git("add", "note.txt");
+      expect(runHook()).toBe(0);
+      git("commit", "-q", "-m", "add public key");
+
+      // 2. Adding a Stellar secret seed is blocked by the hook.
+      const seedLine = `leak=${"S" + "A".repeat(55)}\n`;
+      writeFileSync(noteFile, seedLine, "utf8");
+      git("add", "note.txt");
+      expect(runHook()).not.toBe(0);
+
+      // 3. Adding an ENCRYPTED PRIVATE KEY block is blocked by the hook.
+      writeFileSync(noteFile, `${pemBlock("ENCRYPTED")}\n`, "utf8");
+      git("add", "note.txt");
+      expect(runHook()).not.toBe(0);
+
+      // Simulate an accidentally committed secret (--no-verify), then remove it in a new commit.
+      git("commit", "-q", "--no-verify", "-m", "accidental secret commit");
+      writeFileSync(noteFile, "cleaned=true\n", "utf8");
+      git("add", "note.txt");
+      expect(runHook()).toBe(0);
+
+      // 4. Force-staging pool.json is blocked by the hook.
+      git("commit", "-q", "-m", "remove secret");
+      const poolDir = join(tmp, "frontend", "wallet", "scripts");
+      mkdirSync(poolDir, { recursive: true });
+      writeFileSync(join(poolDir, "pool.json"), "{}\n", "utf8");
+      git("add", "-f", "frontend/wallet/scripts/pool.json");
+      expect(runHook()).not.toBe(0);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

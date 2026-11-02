@@ -6,8 +6,16 @@
 # provision-pool.mjs). This hook catches it being force-added, plus the general
 # case of a Stellar secret seed or a private key block sneaking into a commit.
 #
-# Enable once per clone:  git config core.hooksPath .githooks
+# Enabled automatically by `npm install` (`prepare` script), or manually via:
+#   git config core.hooksPath .githooks
 # Skip deliberately (rare, and only for a false positive):  git commit --no-verify
+
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -f "$hook_dir/../scripts/secret-scan.sh" ]; then
+  . "$hook_dir/../scripts/secret-scan.sh"
+else
+  . "$(git rev-parse --show-toplevel)/scripts/secret-scan.sh"
+fi
 
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 [ -z "$staged" ] && exit 0
@@ -30,8 +38,9 @@ $staged
 esac
 
 # Stricter than a substring match: an S-prefixed 56-character strkey, or a PEM
-# header. G…/C… addresses are public and are not flagged.
-if git diff --cached -U0 | grep -qE 'S[A-Z2-7]{55}|-----BEGIN [A-Z ]*PRIVATE KEY-----'; then
+# header. G…/C… addresses are public and are not flagged. Scan only added lines
+# (excluding the `+++ b/...` diff header) so deleting a committed seed works.
+if git diff --cached -U0 | grep '^+' | grep -v '^+++' | grep -qE "$SECRET_PATTERN"; then
   fail "a Stellar secret seed or private key block appears in the staged diff"
 fi
 

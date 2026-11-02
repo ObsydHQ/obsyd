@@ -20,6 +20,11 @@ travels over HTTP any more.
 
 ### Fixed
 
+- **Pre-commit and CI secret scan unified (`scripts/secret-scan.sh`)** —
+  `.githooks/pre-commit` now scans only added lines (`grep '^+'`, excluding
+  `+++`) so commits removing a secret-shaped line are not blocked, shares a
+  single regex with the CI `secret-scan` job (catching `ENCRYPTED PRIVATE KEY`
+  in both), and is enabled automatically on `npm install` via `prepare`.
 - **WebAuthn flag bits in `obsyd_account`** — UV was read from bit 1 (`0x02`,
   reserved, never set) instead of bit 2 (`0x04`), and BE/BS from `0x04`/`0x08`
   instead of `0x08`/`0x10`. With the default policy no real passkey could
