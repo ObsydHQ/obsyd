@@ -11,6 +11,10 @@ travels over HTTP any more.
 
 ### Fixed
 
+- **`custody-live.mjs` defaulted to port 3002** — `npm run dev` serves 3000, so a
+  bare `node scripts/custody-live.mjs` hit `ECONNREFUSED` with a stack trace.
+  Default is now `http://localhost:3000` (override with argv or `OBSYD_BASE_URL`),
+  with a preflight and FAIL-row guards when later steps cannot run (#100).
 - **WebAuthn flag bits in `obsyd_account`** — UV was read from bit 1 (`0x02`,
   reserved, never set) instead of bit 2 (`0x04`), and BE/BS from `0x04`/`0x08`
   instead of `0x08`/`0x10`. With the default policy no real passkey could
