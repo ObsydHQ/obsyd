@@ -11,6 +11,9 @@ travels over HTTP any more.
 
 ### Changed
 
+- Security-sensitive contracts, wallet custody/signing code, workflows, hooks,
+  and security policy now have explicit CODEOWNERS review assignments. Branch
+  protection must require code-owner approval to make the reviews mandatory.
 - **Issues are maintainer-filed.** The bug-report template is gone and blank
   issues are disabled; the new-issue chooser only links to private
   vulnerability reporting and to the contributing guide. `issue-gate.yml`

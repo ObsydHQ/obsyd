@@ -1,0 +1,9 @@
+# Security-sensitive contracts, wallet custody, and repository policy.
+# The account below maintains this repository; keep these paths reviewed.
+/contracts/ @Neziahtech
+/frontend/wallet/lib/custody.ts @Neziahtech
+/frontend/wallet/lib/wallet.ts @Neziahtech
+/frontend/wallet/lib/soroban.ts @Neziahtech
+/.github/ @Neziahtech
+/.githooks/ @Neziahtech
+/SECURITY.md @Neziahtech
