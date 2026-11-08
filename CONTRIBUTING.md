@@ -87,9 +87,7 @@ automatically (`.github/workflows/issue-gate.yml`).
   [GitHub's advisory form](https://github.com/ObsydHQ/obsyd/security/advisories/new),
   never in a PR, comment or issue. See [`SECURITY.md`](./SECURITY.md).
 
-## Review notes for contract code
-
-### Required ownership for sensitive changes
+## Required ownership for sensitive changes
 
 `.github/CODEOWNERS` requests a maintainer review when a PR changes contracts,
 wallet custody and signing boundaries, GitHub workflows, local hooks, or the
@@ -97,6 +95,8 @@ security policy. After merging the CODEOWNERS file, a repository administrator
 must enable **Require review from Code Owners** for `main` in branch protection
 or its ruleset; the file alone requests reviews but does not enforce approval.
 The maintainer-filed issue policy remains unchanged.
+
+## Review notes for contract code
 
 - Never trust `Vec` lengths or `Bytes` indices without a bounds check; use
   `get_unchecked` only after an explicit length check.
