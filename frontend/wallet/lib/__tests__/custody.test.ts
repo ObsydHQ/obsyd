@@ -28,7 +28,27 @@ function sources(...dirs: string[]): string[] {
 }
 
 const appFiles = () => sources("app", "lib", "components");
-const routeFiles = () => appFiles().filter((f) => f.includes(join("api", "route.ts")));
+
+/** Match Next.js API route modules on POSIX and Windows paths. */
+function isApiRoute(path: string): boolean {
+  const parts = path.replace(/\\/g, "/").split("/");
+  if (parts[parts.length - 1] !== "route.ts") return false;
+  return parts.some((part, i) => part === "app" && parts[i + 1] === "api" && i + 3 < parts.length);
+}
+
+const routeFiles = () => appFiles().filter(isApiRoute);
+
+/** Fail closed when a body-reading API route lacks either part of the guard. */
+function unguardedRoutes(routes: Array<{ file: string; src: string }>): string[] {
+  const unguarded: string[] = [];
+  for (const { file, src } of routes) {
+    // A route that never parses a request body cannot be handed a key.
+    if (!src.includes("req.json()") && !src.includes("readBody(")) continue;
+    if (!src.includes("refuse(")) unguarded.push(file);
+    if (!src.includes('from "@/lib/custody"')) unguarded.push(`${file} (no custody import)`);
+  }
+  return unguarded;
+}
 
 /** Index of the paren closing the one at `open`, or -1. */
 function closeParen(text: string, open: number): number {
@@ -142,6 +162,23 @@ describe("what leaves the device", () => {
 });
 
 describe("what the API accepts", () => {
+  it("discovers every API route on POSIX and Windows paths", () => {
+    expect(isApiRoute("app/api/fund/route.ts")).toBe(true);
+    expect(isApiRoute("app\\api\\swap\\quote\\route.ts")).toBe(true);
+    expect(isApiRoute("app/api/fund/page.tsx")).toBe(false);
+    expect(isApiRoute("components/api/fund/route.ts")).toBe(false);
+    expect(routeFiles()).toHaveLength(6);
+  });
+
+  it("rejects a planted route that reads a body without the custody guard", () => {
+    const planted = "app/api/fixture/route.ts";
+    const source = "const body = await readBody(req); return Response.json(body);";
+    expect(unguardedRoutes([{ file: planted, src: source }])).toEqual([
+      planted,
+      `${planted} (no custody import)`,
+    ]);
+  });
+
   it("refuse() rejects an unknown field and a secret in the allowed ones", () => {
     // Positive fixtures for the guard itself: it must not be a no-op.
     // Any unexpected field is refused, whatever its value holds.
@@ -168,14 +205,9 @@ describe("what the API accepts", () => {
   });
 
   it("every route that reads a body runs it through the boundary", () => {
-    const unguarded: string[] = [];
-    for (const file of routeFiles()) {
-      const src = readFileSync(file, "utf8");
-      // A route that never parses a request body cannot be handed a key.
-      if (!src.includes("req.json()") && !src.includes("readBody(")) continue;
-      if (!src.includes("refuse(")) unguarded.push(file);
-      if (!src.includes("from \"@/lib/custody\"")) unguarded.push(`${file} (no custody import)`);
-    }
+    const unguarded = unguardedRoutes(
+      routeFiles().map((file) => ({ file, src: readFileSync(file, "utf8") })),
+    );
     expect(unguarded, unguarded.join("\n")).toEqual([]);
   });
 
