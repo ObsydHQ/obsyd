@@ -5,7 +5,7 @@ longer start recovery", not "edited lib.rs". -->
 
 ## Why
 
-<!-- Link the issue this closes, or say "no issue — <reason>". -->
+<!-- Link the issue this closes, or say "no issue â€” <reason>". -->
 
 Closes #
 
@@ -22,9 +22,10 @@ Closes #
 - [ ] `npm test`
 - [ ] `npm run lint`
 - [ ] `npm run build`
-- [ ] `cargo test --workspace` (in `contracts/`) — if a contract changed
-- [ ] `cargo check --workspace --release --target wasm32v1-none` — if a contract changed
-- [ ] `node frontend/wallet/scripts/probe-swap.mjs` — if the swap path changed
+- [ ] `cargo test --workspace` (in `contracts/`) â€” if a contract changed
+- [ ] `cargo check --workspace --release --target wasm32v1-none` â€” if a contract changed
+- [ ] `node frontend/wallet/scripts/passkey-live.mjs` â€” if the passkey contract or assertion encoding changed
+- [ ] `node frontend/wallet/scripts/probe-swap.mjs` â€” if the swap path changed
 
 ## Contract-specific
 
