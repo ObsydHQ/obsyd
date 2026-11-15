@@ -1,0 +1,59 @@
+# Dependabot configuration for Obsyd monorepo (npm, Cargo contracts, and GitHub Actions)
+version: 2
+updates:
+  # 1. Root & workspace npm packages (frontend/wallet)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area: frontend"
+      - "tooling"
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Major Next.js upgrades are tracked separately (see #91)
+      - dependency-name: "next"
+        update-types:
+          - "version-update:semver-major"
+
+  # 2. Soroban Rust smart contracts (obsyd_account, obsyd_factory)
+  - package-ecosystem: "cargo"
+    directory: "/contracts"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area: contracts"
+      - "tooling"
+    groups:
+      cargo-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # See contracts/README.md ("Locked dependency note"): soroban-env-host 22.x
+      # declares ed25519-dalek >= 2.0.0 without an upper bound, and ed25519-dalek >= 3.0.0
+      # moves to a rand_core release incompatible with soroban-env-host testutils.
+      - dependency-name: "ed25519-dalek"
+        versions:
+          - ">= 3.0.0"
+      # Major soroban-sdk upgrades require coordinated contract changes (tracked in #38)
+      - dependency-name: "soroban-sdk"
+        update-types:
+          - "version-update:semver-major"
+
+  # 3. GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area: ci"
+      - "tooling"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
