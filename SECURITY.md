@@ -3,6 +3,10 @@
 Obsyd holds user keys and runs contract logic that has not been audited, against
 testnet and eventually mainnet funds. Treat security work as a first-class feature.
 
+For the formal audit-prep package, see:
+- **[Threat Model & Invariants Matrix (`docs/THREAT_MODEL.md`)](./docs/THREAT_MODEL.md)** â€” protected assets, actors and trust assumptions, STRIDE threats per boundary, and every `is_admin_fn` entry and `AccountError` / `FactoryError` variant mapped to its enforcing test.
+- **[Audit Scope & Build Reproduction (`docs/AUDIT_SCOPE.md`)](./docs/AUDIT_SCOPE.md)** â€” in-scope files, reproducible WASM build steps, and known focus areas for auditors.
+
 ## Reporting a vulnerability
 
 Report through GitHub's **[private vulnerability reporting](https://github.com/ObsydHQ/obsyd/security/advisories/new)**
@@ -17,9 +21,9 @@ not sign them.
 
 | Endpoint | Input | Output | Can it see a key? |
 | --- | --- | --- | --- |
-| `POST /api/send` | from, to, amount | **unsigned** XDR | no — `refuse()` rejects any other field with 400 |
-| `POST /api/tx/submit` | signed XDR | tx hash / Horizon result codes | no — relays only, refuses unsigned envelopes |
-| `GET /api/swap/quote` | from, to, amount, address | quote + public pool | no — read-only simulation |
+| `POST /api/send` | from, to, amount | **unsigned** XDR | no â€” `refuse()` rejects any other field with 400 |
+| `POST /api/tx/submit` | signed XDR | tx hash / Horizon result codes | no â€” relays only, refuses unsigned envelopes |
+| `GET /api/swap/quote` | from, to, amount, address | quote + public pool | no â€” read-only simulation |
 | `POST /api/swap/faucet` | address | faucet receipt | holds the *demo treasury* key server-side; never returns it |
 | `POST /api/fund` | address | friendbot receipt | no |
 | `GET /api/balance` | address | balances + activity | no |
@@ -27,7 +31,7 @@ not sign them.
 That table is enforced, not documented hope. Every route that reads a request
 body calls `refuse()` from `lib/custody.ts` first, which rejects any field
 outside `{from, to, amount, address, xdr}` and any value shaped like an ed25519
-secret seed — so a wallet that posts a key by mistake gets a 400 rather than a
+secret seed â€” so a wallet that posts a key by mistake gets a 400 rather than a
 silent success, and the key never reaches a handler. `lib/__tests__/custody.test.ts`
 asserts the table, the guard import on every route, and that no route can sign
 with a caller-supplied key; each scan runs against a planted leak first, because
@@ -38,7 +42,7 @@ a scan that reports nothing is only trustworthy once it has reported something.
 server-only and is the single module allowed to touch `scripts/pool.json`.
 
 A regression that puts a secret in a request body or a response is a bug in the
-table above, not a design decision — CI greps for it (`.github/workflows/ci.yml`,
+table above, not a design decision â€” CI greps for it (`.github/workflows/ci.yml`,
 `secret-scan` job), `npm test` checks the source (`lib/__tests__/custody.test.ts`),
 and `node scripts/custody-live.mjs` checks the running server by planting a
 throwaway key in three bodies and failing if any of them is accepted.
@@ -46,7 +50,7 @@ throwaway key in three bodies and failing if any of them is accepted.
 ## Browser-side defences
 
 The custody boundary protects the API from the key. The browser's own response
-headers protect the key from the browser's threats — set for every route in
+headers protect the key from the browser's threats â€” set for every route in
 `frontend/wallet/next.config.js`:
 
 - **`connect-src` names the only servers this page can talk to**: its own API plus
@@ -59,13 +63,13 @@ headers protect the key from the browser's threats — set for every route in
   classic CSP-bypass tricks that a `<base>` tag or a redirected form would allow.
 - `Referrer-Policy: no-referrer` keeps an account address out of third-party
   logs; `Permissions-Policy` closes camera, microphone, geolocation, payment and
-  USB — WebAuthn, which the wallet does need, is not gated by any of them.
+  USB â€” WebAuthn, which the wallet does need, is not gated by any of them.
 - In development the policy is served **Report-Only**, so a mistake surfaces in
   the browser console rather than silently breaking the wallet mid-edit; the
   production build enforces it.
 
 CSP is a mitigation, not a cure: `script-src 'unsafe-inline'` is still required
-for Next to hydrate, so an injected inline script can run — it just cannot reach
+for Next to hydrate, so an injected inline script can run â€” it just cannot reach
 an origin we did not already trust. The real answer to that is the passkey
 contract, which removes the device secret entirely.
 
@@ -97,7 +101,7 @@ Authorisation is `__check_auth`, and everything else is derived from it:
   failed attempt is not a replay vector.
 - **Timelocked recovery.** `begin_recovery` is permissionless (that is the point:
   a locked-out user needs it) but only queues. `execute_recovery` requires the
-  timelock (≥ 1 hour) to have elapsed, distinct *registered* guardians, a real
+  timelock (â‰¥ 1 hour) to have elapsed, distinct *registered* guardians, a real
   `require_auth` from each, and the configured quorum; it revokes every session
   and every outstanding lease when it succeeds.
 - **Batch execution is signed as a whole.** `execute` runs a
@@ -108,7 +112,7 @@ Authorisation is `__check_auth`, and everything else is derived from it:
   credential; `rotate_passkey` atomically swaps one credential for another and
   wipes all leases.
 - **Initialization happens once, at deploy.** The owner credential and RP policy
-  are set by `__constructor`, which the factory calls inside `deploy_v2` — there
+  are set by `__constructor`, which the factory calls inside `deploy_v2` â€” there
   is no separate `initialize` transaction to front-run, and the host reserves
   `__`-prefixed functions against direct calls, so nobody can re-run it later to
   hand a live wallet a new owner. A test asserts both halves of that
@@ -116,7 +120,7 @@ Authorisation is `__check_auth`, and everything else is derived from it:
   initialized the same way: its admin is a constructor argument of the deploy
   transaction, so there is no first-write race to own it either.
 - **The wallet renews the state it authorizes from.** Soroban storage expires,
-  and only writes push a lifetime forward — while `__check_auth` is a read-only
+  and only writes push a lifetime forward â€” while `__check_auth` is a read-only
   decision apart from the nonce it advances. Left at that, a wallet would stop
   recognising its own passkeys about 40,000 ledgers after deployment, and an
   expired spend cap reads back as *no cap*. Both auth paths therefore finish by
@@ -130,7 +134,7 @@ Authorisation is `__check_auth`, and everything else is derived from it:
 
 `/api/swap/faucet` and `/api/fund` are unauthenticated by design and mint test
 assets. They are hard-gated on `config.network === "testnet"`; leaving that gate
-off in production would let anyone drain the demo treasury (test tokens only) —
+off in production would let anyone drain the demo treasury (test tokens only) â€”
 keep the gate.
 
 ## Open items
@@ -140,7 +144,7 @@ keep the gate.
   passkey contract is the replacement and is tracked in
   [#2](https://github.com/ObsydHQ/obsyd/issues/2). Until it is deployed, do not
   fund a demo wallet with anything you would mind losing.
-- `upgrade` is owner-signed and does not enforce a delay — a compromised passkey
+- `upgrade` is owner-signed and does not enforce a delay â€” a compromised passkey
   could swap the logic immediately. A timelocked (or guardian-countersigned)
   upgrade path is the natural next hardening step.
 - No reentrancy guard on `execute` beyond Soroban's own auth stack; the router
