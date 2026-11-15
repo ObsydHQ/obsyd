@@ -1,6 +1,6 @@
 # Obsyd
 
-> Your passkey is your wallet. No seed phrase. No password. Just your biometric —
+> Your passkey is your wallet. No seed phrase. No password. Just your biometric â€”
 > securing a smart-contract wallet on **Stellar Soroban**.
 
 **Obsyd** is an open-source (MIT) passkey smart-contract wallet for the Stellar
@@ -8,7 +8,7 @@
 electric-cobalt** neumorphic UI and a focused core-wallet scope.
 
 The heart of it is on-chain: `contracts/obsyd_account` is a Soroban **custom
-account** whose `__check_auth` verifies a real WebAuthn assertion — the
+account** whose `__check_auth` verifies a real WebAuthn assertion â€” the
 host's `signature_payload` is the challenge, the credential is a P-256 key
 checked with `secp256r1_verify`, and every credential carries its own replay
 nonce. `contracts/obsyd_factory` deploys one per credential
@@ -18,7 +18,7 @@ recovery, and atomic `approve` + `swap` batching.
 
 What is finished and what is not, stated plainly: the contracts are written,
 tested (50 unit tests over real P-256 / ed25519 signatures) and **proven on
-testnet** — a passkey created in a real browser authorised a payment out of a
+testnet** â€” a passkey created in a real browser authorised a payment out of a
 deployed `obsyd_account` with no other key involved (see
 [Proven on testnet](#proven-on-testnet)). The **app** is not wired to them yet:
 the testnet account it funds today is still a device keypair. The custody
@@ -29,7 +29,7 @@ on screen.
 
 `node frontend/wallet/scripts/passkey-live.mjs` deploys the factory and account
 contracts, creates a passkey in Microsoft Edge (headless, WebAuthn virtual
-authenticator — the browser's own WebAuthn stack builds the assertion), deploys
+authenticator â€” the browser's own WebAuthn stack builds the assertion), deploys
 a wallet for it at its counterfactual address, funds it, and sends XLM out of it
 signed by the passkey alone. The fee is paid by a separate relayer key that has
 no authority over the wallet. It then checks that the wallet refuses a replayed
@@ -40,42 +40,42 @@ Reference run (2026-11-02, 12/12 checks):
 
 | | |
 | --- | --- |
-| Passkey-signed transfer (25 XLM) | [`61a1d195…0070`](https://stellar.expert/explorer/testnet/tx/61a1d195ff8978967d1a567d9a84cb1fe09730848e14f217d3605671877b0070) |
-| Wallet contract | [`CC2EP7VL…67OR`](https://stellar.expert/explorer/testnet/contract/CC2EP7VLMPGDPOMEPXD3JVV247LKITMLICZZ6T3NMO2OXRTBHBOR67OR) |
+| Passkey-signed transfer (25 XLM) | [`61a1d195â€¦0070`](https://stellar.expert/explorer/testnet/tx/61a1d195ff8978967d1a567d9a84cb1fe09730848e14f217d3605671877b0070) |
+| Wallet contract | [`CC2EP7VLâ€¦67OR`](https://stellar.expert/explorer/testnet/contract/CC2EP7VLMPGDPOMEPXD3JVV247LKITMLICZZ6T3NMO2OXRTBHBOR67OR) |
 | Factory contract | `CACLBS5BDDY5ADUJJMATCS6GUM5Z2MU6UP7MSMEQ4GDBVXAYISQSP6PV` |
 
 What this does **not** cover: the authenticator is virtual, not Windows Hello
 or Touch ID (the contract sees the same bytes either way, but no human biometric
-was in the loop); the DER→raw low-s signature conversion and `Assertion`
+was in the loop); the DERâ†’raw low-s signature conversion and `Assertion`
 encoding live in the script, not yet in `lib/passkey.ts`; and testnet resets
-periodically, so the links above will eventually go dead — rerun the script.
+periodically, so the links above will eventually go dead â€” rerun the script.
 
 ---
 
 ## What's inside
 
-- **Contracts (Rust / Soroban)** — passkey account + factory, 50 unit tests
+- **Contracts (Rust / Soroban)** â€” passkey account + factory, 50 unit tests
   built on genuine P-256 / ed25519 signatures, plus a live testnet proof. See
   [`docs/PASSKEY_CONTRACT.md`](./docs/PASSKEY_CONTRACT.md).
-- **Passkey registration** — Settings → Passkeys creates a real WebAuthn
+- **Passkey registration** â€” Settings â†’ Passkeys creates a real WebAuthn
   credential (Face ID / fingerprint / Windows Hello) and derives the wallet's
-  identity from its P-256 public key (`sha256` → `obsyd_…`). Deploying that
-  identity on-chain through `obsyd_factory` — so the identity *is* the account,
-  with an address knowable before it exists — is the next phase and is labelled
+  identity from its P-256 public key (`sha256` â†’ `obsyd_â€¦`). Deploying that
+  identity on-chain through `obsyd_factory` â€” so the identity *is* the account,
+  with an address knowable before it exists â€” is the next phase and is labelled
   as such in the UI; today the account that holds testnet funds is a classic
   ed25519 key the contract replaces.
-- **Dashboard** — live testnet balances and activity from Horizon.
-- **Send** — passkey step-up, transaction built **unsigned** by the API, signed on
+- **Dashboard** â€” live testnet balances and activity from Horizon.
+- **Send** â€” passkey step-up, transaction built **unsigned** by the API, signed on
   the device, relayed to the network.
-- **Swap** — real **Soroswap** AMM on testnet: quote off live pool reserves,
+- **Swap** â€” real **Soroswap** AMM on testnet: quote off live pool reserves,
   slippage-protected `swap_exact_tokens_for_tokens`, signed and submitted from the
   browser.
-- **Recovery** — guardian-based and timelocked **in the contract**
-  (`begin_recovery` → quorum of `require_auth`ed guardians → session revocation).
+- **Recovery** â€” guardian-based and timelocked **in the contract**
+  (`begin_recovery` â†’ quorum of `require_auth`ed guardians â†’ session revocation).
   The restore screen is still a mock and does not reach the chain yet.
-- **Receive / Contacts / Settings** — the receiving address and the
+- **Receive / Contacts / Settings** â€” the receiving address and the
   passkey-derived identity, copy-to-clipboard, saved recipients, network and
-  passkey management. The QR is a placeholder box, not a rendered code — an
+  passkey management. The QR is a placeholder box, not a rendered code â€” an
   address you cannot scan is a small lie, so it is marked as unfinished here
   rather than claimed.
 
@@ -106,17 +106,17 @@ flow: [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ```
 obsyd/
-├─ contracts/            # Soroban contracts (Rust)
-│  ├─ obsyd_account/     #   passkey custom account: __check_auth, sessions,
-│  │                     #   spend caps, guardian recovery, batched execute
-│  └─ obsyd_factory/     #   counterfactual deployment + credential registry
-├─ frontend/
-│  └─ wallet/            # Next.js 14 App Router wallet UI (Obsyd design system)
-│     ├─ app/            #   routes + API (build/relay, quote, faucet, balances)
-│     ├─ lib/            #   passkey identity, device custody, Soroban layer
-│     └─ scripts/        #   Soroswap demo-pool provisioning + probes
-├─ docs/                 # PASSKEY_CONTRACT.md — the assertion wire format
-└─ .reference/           # gitignored third-party study checkout — NOT shipped code
+â”œâ”€ contracts/            # Soroban contracts (Rust)
+â”‚  â”œâ”€ obsyd_account/     #   passkey custom account: __check_auth, sessions,
+â”‚  â”‚                     #   spend caps, guardian recovery, batched execute
+â”‚  â””â”€ obsyd_factory/     #   counterfactual deployment + credential registry
+â”œâ”€ frontend/
+â”‚  â””â”€ wallet/            # Next.js 14 App Router wallet UI (Obsyd design system)
+â”‚     â”œâ”€ app/            #   routes + API (build/relay, quote, faucet, balances)
+â”‚     â”œâ”€ lib/            #   passkey identity, device custody, Soroban layer
+â”‚     â””â”€ scripts/        #   Soroswap demo-pool provisioning + probes
+â”œâ”€ docs/                 # PASSKEY_CONTRACT.md â€” the assertion wire format
+â””â”€ .reference/           # gitignored third-party study checkout â€” NOT shipped code
 ```
 
 ## Getting started
@@ -145,13 +145,13 @@ cargo test --workspace                                     # the unit tests
 `cargo build` and `cargo test` are separate concerns here: the wasm target is the
 artifact, the host target runs the tests. On Windows host linking of a
 `cdylib`+`rlib` crate is unreliable, so `cargo check --workspace --tests` is the
-local gate and CI runs the tests — see [`contracts/README.md`](./contracts/README.md)
+local gate and CI runs the tests â€” see [`contracts/README.md`](./contracts/README.md)
 for that and for the `ed25519-dalek` pin the SDK's testutils require.
 
 To put a wallet on testnet: build the two WASMs, `soroban contract deploy` the
-account and the factory — the factory takes its admin as a constructor argument,
-so there is no `initialize` call to win — then `set_wasm_hash(accountBuild)`,
-`preview_address(credential)` → `create_account(...)`. The walkthrough, with the
+account and the factory â€” the factory takes its admin as a constructor argument,
+so there is no `initialize` call to win â€” then `set_wasm_hash(accountBuild)`,
+`preview_address(credential)` â†’ `create_account(...)`. The walkthrough, with the
 exact `soroban contract invoke` calls, is in
 [`contracts/README.md`](./contracts/README.md).
 
@@ -166,10 +166,10 @@ cd frontend/wallet
 node scripts/provision-pool.mjs   # deploys tokens, creates a pair, adds 100k/100k liquidity
 ```
 
-This writes `scripts/pool.json` (gitignored — it contains a throwaway testnet
+This writes `scripts/pool.json` (gitignored â€” it contains a throwaway testnet
 treasury secret key, which stays on the server and signs only faucet transfers).
-UI flow: load a demo wallet → **Get test tokens** (treasury faucet) → enter an
-amount (live quote from pool reserves) → **Swap on Soroswap**.
+UI flow: load a demo wallet â†’ **Get test tokens** (treasury faucet) â†’ enter an
+amount (live quote from pool reserves) â†’ **Swap on Soroswap**.
 
 The quote is `router.get_amount_out(amount_in, reserve_in, reserve_out)`; the
 execution is `router.swap_exact_tokens_for_tokens(amount_in, amount_out_min, path,
@@ -186,8 +186,10 @@ management screen, and hardware-key assertion support. See
 
 ## Contributing
 
-Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) — dev environment, the exact
-commands CI runs, and the review notes for contract code. Issues are filed by
+Start with [`CONTRIBUTING.md`](./CONTRIBUTING.md) â€” dev environment, the exact
+commands CI runs, and the review notes for contract code. Participating in a
+Drips Wave? Read [`docs/DRIPS_WAVE.md`](./docs/DRIPS_WAVE.md) for issue claiming,
+the 100 / 150 / 200 point tiers, and review expectations. Issues are filed by
 maintainers only: pick an open one rather than opening your own. Good first steps:
 a contract test for a path you think is under-specified, or a UI screen for the
 session/limit surface the contract already exposes.
