@@ -1,8 +1,8 @@
 # The passkey wallet contract
 
 `contracts/obsyd_account` is a Soroban **custom account**: it authorises its own
-invocations, so a WebAuthn assertion — the thing a fingerprint or Windows Hello
-produces — is what moves the funds. `contracts/obsyd_factory` deploys one per
+invocations, so a WebAuthn assertion â€” the thing a fingerprint or Windows Hello
+produces â€” is what moves the funds. `contracts/obsyd_factory` deploys one per
 credential and can name the address before it exists.
 
 This document is the wire-format reference. The code is
@@ -25,31 +25,51 @@ The client therefore:
 
 1. asks the wallet contract to authorise `transfer(...)` (or `execute([...])`),
 2. simulates, and reads the `SorobanAuthorizationEntry` the host produced,
-3. takes `credentials` → the payload hash it must sign,
+3. takes `credentials` â†’ the payload hash it must sign,
 4. runs `navigator.credentials.get()` with `challenge = that 32-byte hash`,
 5. stuffs the resulting assertion into the entry's signature `Val`,
-6. signs nothing else — the account contract verifies the assertion.
+6. signs nothing else â€” the account contract verifies the assertion.
 
-Steps 4–5 are the client's job today and are the remaining gap in the UI
+Steps 4â€“5 are the client's job today and are the remaining gap in the UI
 (see `SECURITY.md`, "Open items").
 
 ### Signature `Val`: the `Assertion` struct
 
 ```rust
 struct Assertion {
-    public_key: BytesN<65>,   // SEC1 uncompressed P-256 point: 0x04 ‖ X ‖ Y
+    public_key: BytesN<65>,   // SEC1 uncompressed P-256 point: 0x04 â€– X â€– Y
     auth_data: Bytes,         // raw authenticatorData from the response
     client_data_json: Bytes,  // raw clientDataJSON
-    signature: BytesN<64>,    // r ‖ s, low-s normalised
+    signature: BytesN<64>,    // r â€– s, low-s normalised
     nonce: u64,               // the credential's stored counter value
 }
 ```
 
-It is a `#[contracttype]` struct, so the client encodes it as an `ScVal` map with
-those keys (`nativeToScVal({publicKey, authData, clientDataJson, signature, nonce}, …)`
-with `scBytes`/`u64` types, or by hand via `xdr.ScVal`). `signature` must be 64
-bytes **and** low-s: `secp256r1_verify` follows BIP-62 style rules, so a high-s
-DER-converted signature fails. Normalise before submitting.
+It is a `#[contracttype]` struct, so Soroban's host XDR decoder expects an
+`ScVal` map (`scvMap`) whose `scvSymbol` keys are the **exact `snake_case` field
+names in lexicographic order** (`auth_data`, `client_data_json`, `nonce`,
+`public_key`, `signature`). Passing a `camelCase` object to `nativeToScVal` will
+not decode into `Assertion`.
+
+Reference encoder from [`frontend/wallet/scripts/passkey-live.mjs`](../frontend/wallet/scripts/passkey-live.mjs) (`lines 190-199`):
+
+```js
+function assertionScVal({ publicKey, authData, clientDataJSON, signature, nonce }) {
+  const e = (k, v) => new xdr.ScMapEntry({ key: xdr.ScVal.scvSymbol(k), val: v });
+  return xdr.ScVal.scvMap([
+    e("auth_data", xdr.ScVal.scvBytes(authData)),
+    e("client_data_json", xdr.ScVal.scvBytes(clientDataJSON)),
+    e("nonce", xdr.ScVal.scvU64(BigInt(nonce))),
+    e("public_key", xdr.ScVal.scvBytes(publicKey)),
+    e("signature", xdr.ScVal.scvBytes(signature)),
+  ]);
+}
+```
+
+`signature` must be 64 bytes **and** low-s: `secp256r1_verify` follows BIP-62
+style rules, so a high-s DER-converted signature fails (`derToRawLowS` in
+`frontend/wallet/scripts/passkey-live.mjs` normalises `s > P256_N / 2n` before
+submitting).
 
 ## Verification, in order
 
@@ -64,15 +84,15 @@ is written.
 | 4 | UP flag when required (`0x01`) | `UserPresenceRequired` |
 | 5 | UV flag when required (`0x04`, bit 2) | `UserVerificationRequired` |
 | 6 | `BE`/`BS` (`0x08`/`0x10`) rejected unless `allow_backup_eligible` | `BackupKeyNotAllowed` |
-| 7 | `AT` (`0x40`) must be clear — attested data is for registration | `AuthDataAttested` |
+| 7 | `AT` (`0x40`) must be clear â€” attested data is for registration | `AuthDataAttested` |
 | 8 | `clientDataJSON` contains `"type":"webauthn.get"` | `BadClientData` |
 | 9 | contains `"challenge":"<base64url(signature_payload)>"` (43 chars, unpadded) | `ChallengeMismatch` |
 | 10 | contains `policy.origin` when the policy pins one | `BadOrigin` |
-| 11 | `secp256r1_verify(cred, sha256(auth_data ‖ sha256(client_data_json)), sig)` | host trap |
+| 11 | `secp256r1_verify(cred, sha256(auth_data â€– sha256(client_data_json)), sig)` | host trap |
 | 12 | `nonce == stored nonce` (checked before verify, advanced only after it) | `NonceMismatch` |
 
-Checks 8–10 are position-aware substring matches (`"key":"value"`), not a JSON
-parse — no parser in a contract, and the `clientDataJSON` shape the browsers
+Checks 8â€“10 are position-aware substring matches (`"key":"value"`), not a JSON
+parse â€” no parser in a contract, and the `clientDataJSON` shape the browsers
 emit is stable. Cross-site iframes are covered by the origin pin plus the
 `origin` field the browser itself writes.
 
@@ -88,7 +108,7 @@ contract stores `nonce + 1`. So:
 
 - the *first* transaction for a fresh wallet uses `nonce = 0`;
 - a client that is unsure of the value reads `passkey_nonce(public_key)`;
-- two concurrent transactions from the same credential are impossible by design —
+- two concurrent transactions from the same credential are impossible by design â€”
   one of them will hit `NonceMismatch` and should be rebuilt.
 
 Session keys have a separate nonce namespace (`SessionNonce(id)`), so minting or
@@ -125,19 +145,19 @@ Spend limits are per token: `set_spend_limit(token, amount, period_secs)` and a
 period_secs`. The charge sums every `transfer` out of the wallet in the authorised
 context tree, and an unparseable or negative amount is treated as a refusal
 (`SpendLimitExceeded`), never as "nothing to charge". Tokens with no configured
-limit are unrestricted — a limit is opt-in per asset.
+limit are unrestricted â€” a limit is opt-in per asset.
 
 ## Guardian recovery
 
-Set up (owner, passkey): `add_guardian(address)` ×N, then
-`set_recovery(threshold, timelock_secs)` with `timelock_secs ≥ 3600`.
+Set up (owner, passkey): `add_guardian(address)` Ã—N, then
+`set_recovery(threshold, timelock_secs)` with `timelock_secs â‰¥ 3600`.
 
 Lost the passkey:
 
 ```
 begin_recovery(new_public_key)   // permissionless; queues, blocks if one is pending
    ... wait timelock_secs ...
-execute_recovery([guardian, …])  // needs `threshold` distinct registered guardians,
+execute_recovery([guardian, â€¦])  // needs `threshold` distinct registered guardians,
                                  // each proving control with require_auth
 ```
 
@@ -153,7 +173,7 @@ makes a stolen guardian set useless without also stealing time.
 ## Batching: `execute`
 
 `execute(Vec<InvokerContractAuthEntry>)` authorises and runs a tree of calls as
-the wallet itself — the primitive a swap needs (`approve` on the token, then
+the wallet itself â€” the primitive a swap needs (`approve` on the token, then
 `swap_exact_tokens_for_tokens` on the router, atomically). Because the tree *is*
 the authorised argument, it is inside the WebAuthn challenge; the prompt cannot
 be re-pointed at different calls after the user confirmed. Entries that are not
@@ -165,7 +185,7 @@ contract invocations return `BadArgs` rather than being silently skipped.
 allow_backup)` deploys with
 
 ```rust
-env.deployer().with_current_contract(sha256(owner_public_key)).deploy_v2(wasm_hash, (…))
+env.deployer().with_current_contract(sha256(owner_public_key)).deploy_v2(wasm_hash, (â€¦))
 ```
 
 so the resulting address is a function of the credential and the factory
@@ -187,12 +207,12 @@ caller of `create_account`.
 ## Storage and TTL
 
 All state is persistent under one `DataKey` enum. Every write extends the entry
-to `ledger.sequence + 40_000` with a `+ 20_000` threshold — near the testnet
+to `ledger.sequence + 40_000` with a `+ 20_000` threshold â€” near the testnet
 maximum for a single extension.
 
 Reads that gate authorization renew as well. `__check_auth` decides from the
 signer set, the policy, the spend caps and the recovery configuration, and then
-writes only a nonce — and only writes extend a lifetime. So both auth paths end
+writes only a nonce â€” and only writes extend a lifetime. So both auth paths end
 with a refresh of exactly the state the decision consumed
 (`refresh_passkey_auth` / `refresh_session_auth` in `storage.rs`); without it an
 idle-but-live wallet would forget its own passkeys a window after deployment, an
@@ -204,12 +224,14 @@ temporary state.
 
 ```bash
 cd contracts
-cargo +stable-x86_64-pc-windows-gnu check --workspace --release --target wasm32v1-none
+cargo check --workspace --release --target wasm32v1-none
 cargo test --workspace           # needs a host-linkable toolchain; CI runs this
-soroban contract build --package obsyd_account --release
+cargo build --workspace --release --target wasm32v1-none
+# or with the Stellar CLI: stellar contract build --package obsyd_account
 ```
 
 `cargo test` needs the `testutils` feature (already a dev-dependency) and links
-real `p256`/`ed25519-dalek` fixtures; on some Windows toolchains host linking
-fails for `cdylib`+`rlib` crates, which is why CI, not the local check, is the
-test gate. See `contracts/README.md`.
+real `p256`/`ed25519-dalek` fixtures; on Windows (`x86_64-pc-windows-gnu`, where
+you can invoke `cargo +stable-x86_64-pc-windows-gnu check --workspace --tests`),
+host linking can fail for `cdylib`+`rlib` crates, which is why CI, not the local
+check, is the test gate on Windows. See `contracts/README.md`.

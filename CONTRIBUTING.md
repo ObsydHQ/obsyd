@@ -28,7 +28,7 @@ because host linking of a `cdylib`+`rlib` crate is unreliable there (see
 A real testnet demo wallet needs a Soroswap pair. `frontend/wallet/scripts/
 provision-pool.mjs` deploys two test tokens, opens a pair and adds liquidity, then
 writes `scripts/pool.json`. That file contains a **throwaway testnet treasury
-secret** and is gitignored — never commit it, never paste it into an issue.
+secret** and is gitignored â€” never commit it, never paste it into an issue.
 
 ## Test before you open a PR
 
@@ -39,12 +39,13 @@ secret** and is gitignored — never commit it, never paste it into an issue.
 | `npm run lint` | ESLint (Next + react-hooks rules) |
 | `cd contracts && cargo test --workspace` | contract unit tests with real P-256/ed25519 signatures |
 | `cd contracts && cargo check --workspace --release --target wasm32v1-none` | the contract compiles to wasm |
+| `node frontend/wallet/scripts/passkey-live.mjs` | live testnet passkey proof: deploys factory + wallet, signs a transfer with a browser WebAuthn assertion, and checks `NonceMismatch` / `ChallengeMismatch` |
 | `node frontend/wallet/scripts/probe-swap.mjs` | the swap demo still quotes and executes against a live pool |
 | `node frontend/wallet/scripts/custody-live.mjs` | the custody boundary holds over the wire, against a running server |
 
-CI runs every row above except the last two, which need live testnet
-credentials and a running dev server. A PR that breaks one of them and says "CI will catch it" will
-usually be asked to fix it first — slow builds on this project are shared
+CI runs every row above except the last three, which need a Chromium browser /
+live testnet credentials / a running dev server. A PR that breaks one of them and says "CI will catch it" will
+usually be asked to fix it first â€” slow builds on this project are shared
 infrastructure.
 
 ## What a good PR looks like
@@ -54,7 +55,7 @@ infrastructure.
 - The description says **what user-visible behaviour changes**, not just which
   files were touched, and links the issue it closes.
 - Contract PRs include a failing-before/passing-after test. If you changed
-  `__check_auth`, add a test that attempts to bypass it — a negative test is the
+  `__check_auth`, add a test that attempts to bypass it â€” a negative test is the
   review.
 - Any new error path gets its own typed error variant, and a test that triggers
   it.
@@ -93,12 +94,12 @@ automatically (`.github/workflows/issue-gate.yml`).
   `get_unchecked` only after an explicit length check.
 - Any signature check must fail closed: `secp256r1_verify`/`ed25519_verify` trap,
   so verify *before* you advance a nonce or charge a limit.
-- Every state write extends its TTL — and so must every read that gates an
+- Every state write extends its TTL â€” and so must every read that gates an
   authorization. `__check_auth` writes only a nonce, so an entry it consulted has
   to be renewed in `refresh_passkey_auth` / `refresh_session_auth` or the wallet
   slowly forgets the very state that lets it say yes.
 - `__check_auth` is the security boundary: the passkey path has no spend caps and
-  the session path has all of them — keep it that way deliberately.
+  the session path has all of them â€” keep it that way deliberately.
 - Do not add a public function that calls `require_auth` on another contract's
   behalf without thinking about `execute` re-entrancy.
 
