@@ -1,0 +1,123 @@
+# Canonical GitHub labels for ObsydHQ/obsyd.
+#
+# To sync these labels to GitHub with the GitHub CLI (`gh`):
+#   gh label create "accessibility"        --color "f143ab" --description "Barrier affecting people with disabilities" --force
+#   gh label create "area: ci"             --color "0e8a16" --description "GitHub Actions and automation" --force
+#   gh label create "area: contracts"      --color "5319e7" --description "Soroban contracts (obsyd_account, obsyd_factory)" --force
+#   gh label create "area: docs"           --color "0075ca" --description "Documentation" --force
+#   gh label create "area: frontend"       --color "1d76db" --description "Next.js wallet app" --force
+#   gh label create "area: repo"           --color "bfdadc" --description "Repository setup and contributor experience" --force
+#   gh label create "area: scripts"        --color "006b75" --description "frontend/wallet/scripts tooling" --force
+#   gh label create "bug"                  --color "d73a4a" --description "Something isn't working" --force
+#   gh label create "complexity: high"     --color "b60205" --description "Drips Wave High â€” 200 points: complex engineering, integration or architecture" --force
+#   gh label create "complexity: medium"   --color "fbca04" --description "Drips Wave Medium â€” 150 points: standard feature touching several parts" --force
+#   gh label create "complexity: trivial"  --color "c2e0c6" --description "Drips Wave Trivial â€” 100 points: small, clearly bounded" --force
+#   gh label create "documentation"        --color "0075ca" --description "Improvements or additions to documentation" --force
+#   gh label create "duplicate"            --color "cfd3d7" --description "This issue or pull request already exists" --force
+#   gh label create "enhancement"          --color "a2eeef" --description "New feature or request" --force
+#   gh label create "good first issue"     --color "7057ff" --description "Good for newcomers" --force
+#   gh label create "help wanted"          --color "008672" --description "Extra attention is needed" --force
+#   gh label create "invalid"              --color "e4e669" --description "This doesn't seem right" --force
+#   gh label create "performance"          --color "f9d0c4" --description "Speed, size or resource use" --force
+#   gh label create "question"             --color "d876e3" --description "Further information is requested" --force
+#   gh label create "security"             --color "d93f0b" --description "Security hardening or vulnerability" --force
+#   gh label create "testing"              --color "c5def5" --description "Tests and test infrastructure" --force
+#   gh label create "tooling"              --color "d4c5f9" --description "Developer tooling" --force
+#   gh label create "ux"                   --color "fef2c0" --description "User experience and interface states" --force
+#   gh label create "wontfix"              --color "ffffff" --description "This will not be worked on" --force
+
+- name: "accessibility"
+  color: "f143ab"
+  description: "Barrier affecting people with disabilities"
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+- name: "complexity: trivial"
+  color: "c2e0c6"
+  description: "Drips Wave Trivial â€” 100 points: small, clearly bounded"
+
+- name: "complexity: medium"
+  color: "fbca04"
+  description: "Drips Wave Medium â€” 150 points: standard feature touching several parts"
+
+- name: "complexity: high"
+  color: "b60205"
+  description: "Drips Wave High â€” 200 points: complex engineering, integration or architecture"
+
+- name: "area: contracts"
+  color: "5319e7"
+  description: "Soroban contracts (obsyd_account, obsyd_factory)"
+
+- name: "area: frontend"
+  color: "1d76db"
+  description: "Next.js wallet app"
+
+- name: "area: ci"
+  color: "0e8a16"
+  description: "GitHub Actions and automation"
+
+- name: "area: docs"
+  color: "0075ca"
+  description: "Documentation"
+
+- name: "area: scripts"
+  color: "006b75"
+  description: "frontend/wallet/scripts tooling"
+
+- name: "area: repo"
+  color: "bfdadc"
+  description: "Repository setup and contributor experience"
+
+- name: "security"
+  color: "d93f0b"
+  description: "Security hardening or vulnerability"
+
+- name: "testing"
+  color: "c5def5"
+  description: "Tests and test infrastructure"
+
+- name: "performance"
+  color: "f9d0c4"
+  description: "Speed, size or resource use"
+
+- name: "tooling"
+  color: "d4c5f9"
+  description: "Developer tooling"
+
+- name: "ux"
+  color: "fef2c0"
+  description: "User experience and interface states"
